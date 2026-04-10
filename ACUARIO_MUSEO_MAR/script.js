@@ -286,9 +286,9 @@ function animateTurtle(element, index) {
         element.style.top = y + 'px';
 
         if (vx < 0) {
-            element.style.transform = 'scaleX(-1) scaleY(1)';
-        } else {
             element.style.transform = 'scaleX(1) scaleY(1)';
+        } else {
+            element.style.transform = 'scaleX(-1) scaleY(1)';
         }
 
         const wave = Math.sin(x * 0.01) * 10;
