@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acuario - Museo del Mar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Acuario Container -->
+    <div class="aquarium">
+        <!-- Efecto de caústicas (refracción marina) -->
+        <div class="caustics-overlay"></div>
+
+        <!-- Efectos de luz volumétricos -->
+        <div class="light-shafts">
+            <div class="shaft shaft-1"></div>
+            <div class="shaft shaft-2"></div>
+            <div class="shaft shaft-3"></div>
+            <div class="shaft shaft-4"></div>
+        </div>
+
+        <!-- Burbujas -->
+        <div class="bubbles"></div>
+
+        <!-- Plancton -->
+        <div class="plankton"></div>
+
+        <!-- Fondo marino -->
+        <div class="sea-floor">
+            <div class="coral coral-1"></div>
+            <div class="coral coral-2"></div>
+            <div class="coral coral-3"></div>
+            <div class="rock rock-1"></div>
+            <div class="rock rock-2"></div>
+            <div class="algae algae-1"></div>
+            <div class="algae algae-2"></div>
+            <div class="algae algae-3"></div>
+        </div>
+
+        <!-- Viñeta oscura - Realismo de profundidad -->
+        <div class="vignette"></div>
+
+        <!-- Contenedor de tortugas -->
+        <div class="turtles-container" id="turtlesContainer"></div>
+
+        <!-- UI Controles -->
+        <div class="ui-panel">
+            <h1>🐢 Acuario del Museo del Mar</h1>
+            
+            <div class="controls">
+                <input 
+                    type="text" 
+                    id="apiUrl" 
+                    placeholder="API URL (auto: mismo servidor)" 
+                    class="input-field"
+                >
+                <button id="connectBtn" class="btn btn-primary">Conectar</button>
+                <button id="refreshBtn" class="btn btn-secondary">Actualizar</button>
+                <button id="fullscreenBtn" class="btn btn-secondary">⛶ Fullscreen</button>
+                <button id="clearBtn" class="btn btn-danger">Limpiar</button>
+            </div>
+
+            <div class="status">
+                <p id="status">Desconectado</p>
+                <p id="turtleCount">Tortugas: 0</p>
+            </div>
+
+            <div class="info-panel" id="infoPanel" style="display: none;">
+                <h3 id="infoTitle">Información de Tortuga</h3>
+                <p id="infoContent"></p>
+                <button class="btn btn-secondary" onclick="closeInfo()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

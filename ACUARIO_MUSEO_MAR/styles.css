@@ -1,0 +1,385 @@
+/* ========== RESET Y BASE ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    background: #000;
+    width: 100%;
+    height: 100%;
+}
+
+/* ========== ACUARIO BASE - FOTORREALISTA ========== */
+.aquarium {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, 
+        #0a1428 0%,      /* Azul muy oscuro - Superficie */
+        #0f2847 20%,     /* Azul profundo */
+        #1a4d68 40%,     /* Azul agua media */
+        #0d3a52 60%,     /* Azul profundo */
+        #081f35 80%,     /* Casi negro azul */
+        #040a15 100%     /* Negro puro - Fondo */
+    );
+    overflow: hidden;
+    /* Filtros para realismo: saturación + contraste */
+    filter: saturate(1.2) contrast(1.08) brightness(0.95) hue-rotate(-5deg);
+}
+
+/* ========== RAYOS DE LUZ - DESACTIVADOS ========== */
+.light-shafts {
+    display: none;
+}
+
+/* ========== CAÚSTICAS - DESACTIVADAS ========== */
+.caustics-overlay {
+    display: none;
+}
+
+/* ========== BURBUJAS FOTORREALISTAS ========== */
+.bubbles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 26;
+}
+
+.bubble {
+    position: absolute;
+    bottom: 0;
+    background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.02) 60%, transparent 100%);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    opacity: 0.4;
+    animation: rise linear infinite;
+    filter: blur(0.5px) drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
+    box-shadow: 
+        inset -2px -2px 5px rgba(255, 255, 255, 0.2),
+        inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes rise {
+    0% {
+        bottom: -100px;
+        opacity: 0.2;
+        filter: blur(0.5px) drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+    }
+    10% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.45;
+        filter: blur(0.5px) drop-shadow(0 1px 3px rgba(255, 255, 255, 0.2));
+    }
+    85% {
+        opacity: 0.35;
+    }
+    100% {
+        bottom: 100vh;
+        opacity: 0;
+        filter: blur(0.5px) drop-shadow(0 0 2px rgba(255, 255, 255, 0.05));
+    }
+}
+
+/* ========== PLANCTON - DESACTIVADO ========== */
+.plankton {
+    display: none;
+}
+
+/* ========== FONDO MARINO - DESACTIVADO ========== */
+.sea-floor {
+    display: none;
+}
+
+.coral, .rock, .algae {
+    display: none;
+}
+
+/* ========== VIÑETA - DESACTIVADA ========== */
+.vignette {
+    display: none;
+}
+
+/* ========== CONTENEDOR DE TORTUGAS ========== */
+.turtles-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 25;
+}
+
+.turtle {
+    position: absolute;
+    cursor: pointer;
+    filter: drop-shadow(0 5px 15px rgba(0, 150, 200, 0.6)) brightness(1.05);
+    transition: filter 0.3s ease;
+    z-index: 25;
+}
+
+.turtle:hover {
+    filter: drop-shadow(0 8px 25px rgba(0, 220, 255, 1)) brightness(1.15);
+}
+
+.turtle img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* ========== UI PANEL ========== */
+.ui-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 10, 20, 0.92);
+    border: 2px solid #0dd9ff;
+    border-radius: 12px;
+    padding: 18px;
+    max-width: 320px;
+    color: #0dd9ff;
+    font-size: 13px;
+    z-index: 100;
+    backdrop-filter: blur(15px);
+    box-shadow: 
+        0 0 30px rgba(13, 217, 255, 0.4),
+        inset 0 0 20px rgba(13, 217, 255, 0.05);
+}
+
+.ui-panel h1 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(13, 217, 255, 0.8);
+    color: #00ff88;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.input-field {
+    padding: 10px 12px;
+    background: rgba(13, 217, 255, 0.08);
+    border: 1.5px solid #0dd9ff;
+    border-radius: 6px;
+    color: #0dd9ff;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    background: rgba(13, 217, 255, 0.15);
+    box-shadow: 0 0 15px rgba(13, 217, 255, 0.3);
+    outline: none;
+}
+
+.input-field::placeholder {
+    color: rgba(13, 217, 255, 0.4);
+}
+
+.btn {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 12px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0dd9ff, #00a8cc);
+    color: #000;
+    box-shadow: 0 0 15px rgba(13, 217, 255, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(13, 217, 255, 0.6);
+}
+
+.btn-secondary {
+    background: rgba(13, 217, 255, 0.15);
+    color: #0dd9ff;
+    border: 1px solid #0dd9ff;
+}
+
+.btn-secondary:hover {
+    background: rgba(13, 217, 255, 0.25);
+    box-shadow: 0 0 10px rgba(13, 217, 255, 0.3);
+}
+
+.btn-danger {
+    background: rgba(255, 100, 100, 0.2);
+    color: #ff6464;
+    border: 1px solid #ff6464;
+}
+
+.btn-danger:hover {
+    background: rgba(255, 100, 100, 0.4);
+    box-shadow: 0 0 10px rgba(255, 100, 100, 0.3);
+}
+
+.btn-active {
+    background: rgba(0, 255, 136, 0.25) !important;
+    color: #00ff88 !important;
+    border: 1px solid #00ff88 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.4) !important;
+}
+
+.btn-active:hover {
+    background: rgba(0, 255, 136, 0.35) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.6) !important;
+}
+
+.status {
+    border-top: 1px solid rgba(13, 217, 255, 0.3);
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.status p {
+    margin: 6px 0;
+    font-size: 12px;
+    text-shadow: 0 0 5px rgba(13, 217, 255, 0.3);
+}
+
+.status p strong {
+    color: #00ff88;
+}
+
+.info-panel {
+    border: 1px solid rgba(13, 217, 255, 0.4);
+    padding: 14px;
+    border-radius: 6px;
+    margin-top: 10px;
+    background: rgba(13, 217, 255, 0.08);
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.info-panel h3 {
+    margin-bottom: 10px;
+    color: #00ff88;
+    font-size: 14px;
+}
+
+.info-panel p {
+    margin-bottom: 8px;
+    word-break: break-all;
+    font-size: 12px;
+}
+
+/* ========== FULLSCREEN MODE ========== */
+body.fullscreen-mode .ui-panel {
+    display: none;
+}
+
+body.fullscreen-mode .aquarium {
+    width: 100%;
+    height: 100vh;
+}
+
+/* ========== TOAST NOTIFICATIONS ========== */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(13, 217, 255, 0.95);
+    color: #000;
+    padding: 14px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    display: none;
+    z-index: 200;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 8px 30px rgba(13, 217, 255, 0.6);
+}
+
+.toast.show {
+    display: block;
+}
+
+.toast.success {
+    background: rgba(0, 255, 136, 0.95);
+    color: #000;
+    box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5);
+}
+
+.toast.error {
+    background: rgba(255, 100, 100, 0.95);
+    color: #fff;
+    box-shadow: 0 8px 30px rgba(255, 100, 100, 0.5);
+}
+
+.toast.info {
+    background: rgba(13, 217, 255, 0.95);
+    color: #000;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ========== SCROLLBAR ========== */
+.info-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.info-panel::-webkit-scrollbar-track {
+    background: rgba(13, 217, 255, 0.1);
+    border-radius: 3px;
+}
+
+.info-panel::-webkit-scrollbar-thumb {
+    background: rgba(13, 217, 255, 0.6);
+    border-radius: 3px;
+}
+
+.info-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(13, 217, 255, 1);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .ui-panel {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+
+    .controls {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        flex: 1;
+        min-width: 80px;
+    }
+}

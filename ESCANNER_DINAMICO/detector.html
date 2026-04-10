@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Detector de Marcadores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        .detector-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .frame-guide {
+            width: 250px;
+            height: 250px;
+            border: 3px dashed rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .scanning {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .detected {
+            animation: blink 0.5s ease-in-out;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .marker-detected {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+        }
+
+        .marker-icon {
+            font-size: 80px;
+            animation: scaleUp 0.6s ease-out;
+        }
+
+        @keyframes scaleUp {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .marker-label {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00ff88;
+            margin-top: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            font-size: 14px;
+            max-width: 80%;
+            z-index: 15;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 15;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(239, 68, 68, 0.9);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 80%;
+            z-index: 20;
+            border: 2px solid #dc2626;
+        }
+
+        .error h2 {
+            margin-bottom: 10px;
+        }
+
+        .error button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #ef4444;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .error button:hover {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="detector-container">
+        <video id="video" autoplay playsinline muted></video>
+
+        <div class="header">
+            <h1>🎯 Detector de Marcadores</h1>
+            <p>Apunta a un marcador para abrir el escáner</p>
+        </div>
+
+        <div class="overlay">
+            <div class="frame-guide"></div>
+            <div class="status-text scanning">
+                📍 Buscando marcadores...
+            </div>
+        </div>
+
+        <div class="info-panel">
+            🐟 Pez • 🐢 Tortuga • 🤖 Auto-selección de escáner
+        </div>
+    </div>
+
+    <div id="errorContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@0.4.0/dist/mind-ar.umd.js"></script>
+    <script>
+        // ========== CONFIGURACIÓN ==========
+        const markers = {
+            pez: {
+                index: 0,
+                file: 'Marcador pez.mind',
+                icon: '🐟',
+                name: 'Pez',
+                redirect: '/pez'
+            },
+            tortuga: {
+                index: 1,
+                file: 'Marcador tortuga.mind',
+                icon: '🐢',
+                name: 'Tortuga',
+                redirect: '/tortuga'
+            }
+        };
+
+        let mindarController = null;
+        let detectionActive = true;
+        let lastDetectedMarker = null;
+
+        // ========== INICIALIZACIÓN ==========
+        async function initDetector() {
+            const video = document.getElementById('video');
+
+            try {
+                // Acceder a la cámara
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                video.srcObject = stream;
+                console.log('✅ Cámara iniciada');
+
+                // Inicializar MindAR
+                mindarController = new window.MINDAR.ImageController({
+                    filterMinCF: 0.3,
+                    filterBeta: 0.5,
+                });
+
+                await mindarController.setSource(video);
+
+                // Cargar marcadores
+                await mindarController.addImageTarget(markers.pez.file);
+                await mindarController.addImageTarget(markers.tortuga.file);
+
+                console.log('📍 Marcadores cargados');
+
+                // Iniciar detección
+                await mindarController.start();
+                console.log('🔍 Detección iniciada');
+
+                // Loop de detección
+                startDetectionLoop();
+
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showError('❌ Error de Inicialización', error.message);
+            }
+        }
+
+        function startDetectionLoop() {
+            const detectionInterval = setInterval(() => {
+                if (!detectionActive || !mindarController) {
+                    clearInterval(detectionInterval);
+                    return;
+                }
+
+                // Detectar pez (índice 0)
+                const pezAnchor = mindarController.getAnchorPose(0);
+                if (pezAnchor && !lastDetectedMarker) {
+                    clearInterval(detectionInterval);
+                    onMarkerDetected('pez');
+                    return;
+                }
+
+                // Detectar tortuga (índice 1)
+                const tortugaAnchor = mindarController.getAnchorPose(1);
+                if (tortugaAnchor && !lastDetectedMarker) {
+                    clearInterval(detectionInterval);
+                    onMarkerDetected('tortuga');
+                    return;
+                }
+            }, 100); // Revisar cada 100ms
+        }
+
+        function onMarkerDetected(markerType) {
+            const marker = markers[markerType];
+            lastDetectedMarker = markerType;
+            detectionActive = false;
+
+            console.log(`✅ ¡${marker.name} detectado!`);
+
+            // Mostrar indicador
+            showMarkerDetected(marker);
+
+            // Redirigir después de 1.5 segundos
+            setTimeout(() => {
+                window.location.href = marker.redirect;
+            }, 1500);
+        }
+
+        function showMarkerDetected(marker) {
+            const overlay = document.querySelector('.overlay');
+            overlay.innerHTML = `
+                <div class="marker-detected">
+                    <div class="marker-icon">${marker.icon}</div>
+                    <div class="marker-label">¡${marker.name} Detectado!</div>
+                </div>
+            `;
+            overlay.style.pointerEvents = 'none';
+        }
+
+        function showError(title, message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `
+                <div class="error">
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <button onclick="location.reload()">🔄 Reintentar</button>
+                </div>
+            `;
+        }
+
+        // ========== INICIO ==========
+        window.addEventListener('load', () => {
+            setTimeout(initDetector, 500);
+        });
+
+        // ESC para salir
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.location.href = '/dinamico';
+            }
+        });
+    </script>
+</body>
+</html>
