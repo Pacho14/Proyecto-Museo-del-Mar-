@@ -234,6 +234,9 @@ function toggleFullscreen() {
     btn.textContent = isFullscreen ? '⛶ Salir' : '⛶ Fullscreen';
     btn.classList.toggle('btn-active');
     
+    // Re-renderizar tortugas para adaptarse al nuevo viewport
+    setTimeout(() => renderTurtles(), 100);
+    
     if (isFullscreen) {
         showToast('🖥️ Modo pantalla completa (presiona ESC para salir)', 'success');
     } else {
@@ -249,8 +252,8 @@ function renderTurtles() {
     turtles.forEach((turtle, index) => {
         const turtleEl = document.createElement('div');
         turtleEl.className = 'turtle';
-        turtleEl.style.width = '300px';
-        turtleEl.style.height = '300px';
+        turtleEl.style.width = '500px';
+        turtleEl.style.height = '500px';
         turtleEl.innerHTML = `<img src="${turtle.url}" alt="Tortuga ${index + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23666%22/%3E%3C/svg%3E'">`;
         
         turtleEl.addEventListener('click', () => showTurtleInfo(turtle));
@@ -263,8 +266,8 @@ function renderTurtles() {
 }
 
 function animateTurtle(element, index) {
-    const startX = Math.random() * (window.innerWidth - 300);
-    const startY = Math.random() * (window.innerHeight - 500) + 100;
+    const startX = Math.random() * (window.innerWidth - 500);
+    const startY = Math.random() * (window.innerHeight - 750) + 100;
     
     const speedX = 0.3 + Math.random() * 0.5;
     const speedY = 0.1 + Math.random() * 0.3;
@@ -279,8 +282,8 @@ function animateTurtle(element, index) {
         x += vx;
         y += vy;
 
-        if (x <= 0 || x >= window.innerWidth - 300) vx *= -1;
-        if (y <= 100 || y >= window.innerHeight - 250) vy *= -1;
+        if (x <= 0 || x >= window.innerWidth - 500) vx *= -1;
+        if (y <= 100 || y >= window.innerHeight - 350) vy *= -1;
 
         element.style.left = x + 'px';
         element.style.top = y + 'px';

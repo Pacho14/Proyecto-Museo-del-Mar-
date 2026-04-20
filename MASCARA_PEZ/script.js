@@ -82,15 +82,15 @@ const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notificationText');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
-const detectionStatus = document.getElementById('detectionStatus');
-
 let stream = null;
 let capturedImages = [];
 let isStreaming = false;
 let referenceImageData = null;
 let captureTimeout = null;
 let maskPath = null;
-let frameValidationCounter = 0; // Para throttle de logs
+let currentMaskConfidence = 0; // Confianza actual de detección (0-1)
+let lastCapturedImage = null; // Último pez capturado (para modal)
+let modalTimeout = null; // Timeout del modal
 
 // API Server - Auto detectar configuración
 // SIEMPRE usar mismo host/puerto pero con /api
@@ -120,10 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     startBtn.addEventListener('click', startCamera);
     stopBtn.addEventListener('click', stopCamera);
-    captureBtn.addEventListener('click', () => {
-        clearTimeout(captureTimeout);
-        captureImage('manual');
-    });
+    const captureBtn = document.getElementById('captureManualBtn');
+    if (captureBtn) {
+        captureBtn.addEventListener('click', () => {
+            clearTimeout(captureTimeout);
+            captureImage('manual');
+        });
+    }
     downloadAllBtn.addEventListener('click', downloadAll);
     clearAllBtn.addEventListener('click', clearAll);
 
@@ -136,6 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listener para pantalla completa
     document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+    // Cerrar modal si se hace clic fuera
+    const captureModal = document.getElementById('captureModal');
+    captureModal.addEventListener('click', (e) => {
+        if (e.target === captureModal) {
+            hideCaptureModal();
+        }
+    });
 
     // Tecla Escape para salir de fullscreen
     document.addEventListener('keydown', (e) => {
@@ -415,15 +426,12 @@ async function startCamera() {
             
             isStreaming = true;
             updateUI();
-            showNotification('▶️ Cámara iniciada - Validación en tiempo real activada');
+            showNotification('▶️ Cámara iniciada - Listo para capturar');
 
             // Configurar canvas de detección
             detectionCanvas.width = video.videoWidth;
             detectionCanvas.height = video.videoHeight;
             console.log('Canvas configurado:', detectionCanvas.width, 'x', detectionCanvas.height);
-
-            // Iniciar validación de encuadre en tiempo real
-            validateFrameQuality();
         };
 
         video.onerror = (e) => {
@@ -442,211 +450,6 @@ async function startCamera() {
         isStreaming = false;
         updateUI();
     }
-}
-
-// Validación de encuadre con IA en tiempo real
-function validateFrameQuality() {
-    if (!isStreaming) return;
-
-    try {
-        // Dibujar frame actual en canvas de detección
-        detCtx.drawImage(video, 0, 0, detectionCanvas.width, detectionCanvas.height);
-        
-        // Obtener la región del frame (donde debería estar el pez)
-        const frameInfo = getFrameRegion();
-        const imageData = detCtx.getImageData(frameInfo.startX, frameInfo.startY, frameInfo.width, frameInfo.height);
-        
-        // Analizar la región para determinar la calidad del encuadre
-        const quality = analyzeFrameContent(imageData);
-        
-        // Log cada 10 frames para evitar spam
-        if (frameValidationCounter % 10 === 0) {
-            console.log(`📊 Quality: ${quality.score.toFixed(1)}/100 | Centering: ${(quality.centeringScore * 100).toFixed(0)}%`);
-        }
-        frameValidationCounter++;
-        
-        // Actualizar estado visual y mensaje
-        updateFrameQuality(quality);
-        
-    } catch (error) {
-        console.error('Error validando encuadre:', error);
-    }
-
-    // Continuar validando en tiempo real
-    requestAnimationFrame(validateFrameQuality);
-}
-
-// Analizar contenido del frame para determinar la calidad del encuadre
-function analyzeFrameContent(imageData) {
-    const data = imageData.data;
-    let brightness = 0;
-    let contrast = 0;
-    let edgePixels = 0;
-    let uniformPixels = 0;
-    let totalPixels = data.length / 4;
-
-    // Calcular brillo y contraste
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        
-        // Brillo promedio
-        brightness += (r + g + b) / 3;
-    }
-    brightness = brightness / totalPixels;
-
-    // Análisis de varianza (contraste)
-    let variance = 0;
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const pixel = (r + g + b) / 3;
-        variance += Math.pow(pixel - brightness, 2);
-    }
-    contrast = Math.sqrt(variance / totalPixels);
-
-    // Análisis de bordes (detección de formas)
-    for (let i = 0; i < data.length - 8; i += 4) {
-        const diff = Math.abs((data[i] - data[i + 4]) + (data[i + 1] - data[i + 5]) + (data[i + 2] - data[i + 6]));
-        if (diff > 30) edgePixels++;
-        if (diff < 5) uniformPixels++;
-    }
-
-    // ========== NUEVA: DETECCIÓN DE CENTRADO HORIZONTAL ==========
-    // Detectar bordes negros/oscuros de la máscara (contorno del dibujo)
-    const centeringScore = detectMaskCentering(imageData);
-
-    // Calcular puntuación de calidad (0-100)
-    let quality = 0;
-    
-    // Luz suficiente (brillo entre 30-220)
-    const lightnessScore = brightness > 30 && brightness < 220 ? 25 : 0;
-    
-    // Contraste suficiente (entre 20-150)
-    const contrastScore = contrast > 20 && contrast < 150 ? 25 : 0;
-    
-    // Bordes detectados (indica forma/objeto visible)
-    const edgeScore = edgePixels > totalPixels * 0.05 ? 20 : 0;
-    
-    // No muy vacío (no demasiados píxeles uniformes)
-    const contentScore = uniformPixels < totalPixels * 0.8 ? 15 : 0;
-    
-    // Centrado horizontal (nueva métrica)
-    const centeringQuality = centeringScore * 15; // Máx 15 puntos
-    
-    quality = lightnessScore + contrastScore + edgeScore + contentScore + centeringQuality;
-
-    return {
-        score: Math.min(quality, 100),
-        brightness: brightness,
-        contrast: contrast,
-        edges: edgePixels,
-        uniformity: uniformPixels,
-        centeringScore: centeringScore,
-        centeringPercent: Math.round(centeringScore * 100)
-    };
-}
-
-// Detectar si la máscara está centrada horizontalmente
-function detectMaskCentering(imageData) {
-    const data = imageData.data;
-    const width = imageData.width;
-    const height = imageData.height;
-    
-    // Detectar píxeles "diferentes" (contenido, no fondo uniforme)
-    const significantPixels = [];
-    
-    // Analizar histograma horizontal para encontrar dónde está el contenido
-    const horizontalDensity = new Array(width).fill(0);
-    
-    // Buscar píxeles que representen contenido (bajo luminance O colores saturados)
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const luminance = (r + g + b) / 3;
-        
-        // Detectar: píxeles oscuros OR píxeles muy saturados (colores fuertes)
-        const isBright = Math.max(r, g, b) > 200;
-        const isDark = Math.min(r, g, b) < 100;
-        const isSaturated = Math.max(r, g, b) - Math.min(r, g, b) > 80;
-        
-        if (isDark || (isBright && isSaturated) || isSaturated) {
-            const pixelIndex = i / 4;
-            const x = pixelIndex % width;
-            const y = Math.floor(pixelIndex / width);
-            
-            // Solo contar píxeles en el tercio medio verticalmente (para evitar ruido arriba/abajo)
-            if (y > height * 0.25 && y < height * 0.75) {
-                horizontalDensity[x]++;
-                significantPixels.push(x);
-            }
-        }
-    }
-    
-    if (significantPixels.length < width * height * 0.01) {
-        console.log('⚠️ Muy poco contenido detectado');
-        return 0;
-    }
-    
-    // Encontrar el rango con más densidad (donde está la máscara)
-    let maxDensity = 0;
-    let maxDensityPos = 0;
-    for (let x = 0; x < width; x++) {
-        if (horizontalDensity[x] > maxDensity) {
-            maxDensity = horizontalDensity[x];
-            maxDensityPos = x;
-        }
-    }
-    
-    // Encontrar bordes del contenido (donde la densidad es significativa)
-    let contentLeft = 0;
-    let contentRight = width - 1;
-    
-    const densityThreshold = maxDensity * 0.3; // 30% de la densidad máxima
-    
-    // Encontrar borde izquierdo
-    for (let x = 0; x < width; x++) {
-        if (horizontalDensity[x] > densityThreshold) {
-            contentLeft = x;
-            break;
-        }
-    }
-    
-    // Encontrar borde derecho
-    for (let x = width - 1; x >= 0; x--) {
-        if (horizontalDensity[x] > densityThreshold) {
-            contentRight = x;
-            break;
-        }
-    }
-    
-    const contentWidth = contentRight - contentLeft;
-    const contentCenter = contentLeft + contentWidth / 2;
-    const frameCenter = width / 2;
-    
-    const deviation = Math.abs(contentCenter - frameCenter);
-    const tolerance = width * 0.15; // ±15%
-    
-    const centeringScore = Math.max(0, 1 - (deviation / tolerance));
-    
-    if (frameValidationCounter % 10 === 0) {
-        console.log(`🎯 Centrado: Desv=${deviation.toFixed(0)}px, Tol=${tolerance.toFixed(0)}px, Score=${centeringScore.toFixed(2)}`);
-        console.log(`📍 Contenido: Izq=${contentLeft}, Der=${contentRight}, Ancho=${contentWidth}, Centro=${contentCenter.toFixed(0)}`);
-    }
-    
-    return centeringScore;
-}
-
-// Actualizar estado visual del encuadre
-function updateFrameQuality(quality) {
-    const status = document.getElementById('detectionStatus');
-    status.textContent = '🎯 Posiciona tu dibujo aquí';
-    status.style.color = '#ffffff';
-    status.style.fontSize = '14px';
-    status.style.fontWeight = '600';
 }
 
 // Obtener información de la región del frame
@@ -701,6 +504,8 @@ function toggleFullscreen() {
         if (gallerySection) gallerySection.style.display = 'none';
         if (container) {
             container.style.maxWidth = '100%';
+            container.style.width = '100%';
+            container.style.height = '100vh';
             container.style.borderRadius = '0';
             container.style.boxShadow = 'none';
             container.style.padding = '0';
@@ -711,12 +516,24 @@ function toggleFullscreen() {
         const allBtns = controls.querySelectorAll('.btn');
         allBtns.forEach(btn => {
             const text = btn.getAttribute('title');
-            if (text && (text.includes('Capturar') || text.includes('Pantalla') || text.includes('Detener') || text.includes('Iniciar'))) {
+            if (text && (text.includes('Capturar') || text.includes('Pantalla') || text.includes('Detener'))) {
                 btn.style.display = 'flex';
             } else {
                 btn.style.display = 'none';
             }
         });
+        
+        // Activar fullscreen API
+        const element = container || document.documentElement;
+        if (element.requestFullscreen) {
+            element.requestFullscreen().catch(err => console.error('Error fullscreen:', err));
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
         
     } else {
         fullscreenBtn.innerHTML = '<span class="btn-icon">🖥️</span><span class="btn-text">Pantalla Completa</span>';
@@ -728,6 +545,8 @@ function toggleFullscreen() {
         if (gallerySection) gallerySection.style.display = 'block';
         if (container) {
             container.style.maxWidth = '700px';
+            container.style.width = '100%';
+            container.style.height = 'auto';
             container.style.borderRadius = '16px';
             container.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1)';
             container.style.padding = 'auto';
@@ -739,6 +558,19 @@ function toggleFullscreen() {
         allBtns.forEach(btn => {
             btn.style.display = 'flex';
         });
+        
+        // Salir de fullscreen API
+        if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
     }
 }
 
@@ -755,8 +587,14 @@ function captureImage(mode = 'manual') {
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+        // Detectar si estamos en fullscreen
+        const cameraSection = document.querySelector('.camera-section');
+        const isFullscreen = cameraSection.classList.contains('fullscreen');
+
         // Crear canvas con la máscara recortada
-        const maskedCanvas = createMaskedCapture(canvas);
+        const maskedCanvas = isFullscreen 
+            ? createAbsoluteMaskedCapture(canvas) 
+            : createMaskedCapture(canvas);
 
         // Convertir a blob y guardar
         maskedCanvas.toBlob((blob) => {
@@ -764,17 +602,23 @@ function captureImage(mode = 'manual') {
             const timestamp = new Date().toLocaleString('es-ES');
             const captureMode = mode === 'automatic' ? '📸 Automática' : '👆 Manual';
             
-            capturedImages.push({
+            const captureData = {
                 url: url,
                 blob: blob,
                 timestamp: timestamp,
                 mode: captureMode,
                 id: Date.now()
-            });
+            };
+
+            capturedImages.push(captureData);
+            lastCapturedImage = captureData;
 
             addImageToGallery(url, timestamp, capturedImages.length - 1);
             updateUI();
             showNotification(`✓ ${captureMode} (${capturedImages.length})`);
+
+            // Mostrar modal de captura exitosa
+            showCaptureModal(url);
 
             // Envío automático al acuario
             if (serverConnected) {
@@ -787,6 +631,77 @@ function captureImage(mode = 'manual') {
     } catch (error) {
         console.error('Error al capturar:', error);
         showNotification('❌ Error al capturar la imagen', 'danger');
+    }
+}
+
+// Crear captura con máscara absoluta (fullscreen) - captura 100% de la imagen
+function createAbsoluteMaskedCapture(sourceCanvas) {
+    // En fullscreen, capturar toda la imagen (100% del canvas)
+    const absoluteCanvas = document.createElement('canvas');
+    absoluteCanvas.width = sourceCanvas.width;
+    absoluteCanvas.height = sourceCanvas.height;
+    const absoluteCtx = absoluteCanvas.getContext('2d');
+    absoluteCtx.drawImage(sourceCanvas, 0, 0);
+
+    if (!maskPath) {
+        return absoluteCanvas;
+    }
+
+    try {
+        const svgWidth = 278.61;
+        const svgHeight = 223.01;
+        
+        // Calcular escala más grande para fullscreen
+        const scaleX = sourceCanvas.width / svgWidth;
+        const scaleY = sourceCanvas.height / svgHeight;
+        const scale = Math.min(scaleX, scaleY) * 0.25; // 25% para captura absoluta
+
+        const offsetX = (sourceCanvas.width - (svgWidth * scale)) / 2;
+        const offsetY = (sourceCanvas.height - (svgHeight * scale)) / 2;
+
+        // Canvas para crear la máscara
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = sourceCanvas.width;
+        maskCanvas.height = sourceCanvas.height;
+        const maskCtx = maskCanvas.getContext('2d');
+
+        // Llenar con blanco primero
+        maskCtx.fillStyle = '#FFFFFF';
+        maskCtx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+
+        // Dibujar la máscara del pez en negro
+        maskCtx.fillStyle = '#000000';
+        maskCtx.save();
+        maskCtx.translate(offsetX, offsetY);
+        maskCtx.scale(scale, scale);
+        maskCtx.fill(maskPath);
+        maskCtx.restore();
+
+        // Canvas final con imagen recortada por máscara
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = sourceCanvas.width;
+        finalCanvas.height = sourceCanvas.height;
+        const finalCtx = finalCanvas.getContext('2d');
+
+        // Copiar imagen original
+        finalCtx.drawImage(sourceCanvas, 0, 0);
+
+        // Aplicar máscara
+        const imageData = finalCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        const maskData = maskCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        
+        for (let i = 3; i < imageData.data.length; i += 4) {
+            // Si el píxel en la máscara es blanco (255), hacer transparente el original
+            if (maskData.data[i - 3] === 255 && maskData.data[i - 2] === 255 && maskData.data[i - 1] === 255) {
+                imageData.data[i] = 0; // Alpha = 0 (transparente)
+            }
+        }
+        finalCtx.putImageData(imageData, 0, 0);
+
+        return finalCanvas;
+    } catch (error) {
+        console.error('Error aplicando máscara absoluta:', error);
+        return absoluteCanvas;
     }
 }
 
@@ -1058,14 +973,16 @@ function showNotification(message, type = 'success') {
 
 // Actualizar UI
 function updateUI() {
+    const captureManualBtn = document.getElementById('captureManualBtn');
+    
     if (isStreaming) {
         startBtn.style.display = 'none';
         stopBtn.style.display = 'flex';
-        captureBtn.disabled = false;
+        if (captureManualBtn) captureManualBtn.style.display = 'flex';
     } else {
         startBtn.style.display = 'flex';
         stopBtn.style.display = 'none';
-        captureBtn.disabled = true;
+        if (captureManualBtn) captureManualBtn.style.display = 'none';
     }
 
     if (capturedImages.length > 0) {
@@ -1074,6 +991,70 @@ function updateUI() {
     } else {
         downloadAllBtn.style.display = 'none';
         clearAllBtn.style.display = 'none';
+    }
+}
+
+// ========== MODAL DE CAPTURA EXITOSA ==========
+function showCaptureModal(imageUrl) {
+    const modal = document.getElementById('captureModal');
+    const preview = document.getElementById('capturePreview');
+    const sendBtn = document.getElementById('modalSendBtn');
+    const discardBtn = document.getElementById('modalDiscardBtn');
+    const timerSpan = document.getElementById('modalTimer');
+
+    // Mostrar modal
+    modal.style.display = 'flex';
+    preview.src = imageUrl;
+
+    // Limpiar timeout anterior si existe
+    if (modalTimeout) {
+        clearInterval(modalTimeout);
+    }
+
+    let countdown = 6;
+    timerSpan.textContent = countdown;
+
+    // Countdown de 6 segundos
+    modalTimeout = setInterval(() => {
+        countdown--;
+        timerSpan.textContent = countdown;
+
+        if (countdown === 0) {
+            clearInterval(modalTimeout);
+            hideCaptureModal();
+        }
+    }, 1000);
+
+    // Event listeners
+    sendBtn.onclick = () => {
+        clearInterval(modalTimeout);
+        if (lastCapturedImage && serverConnected) {
+            sendPezToAquarium(lastCapturedImage.blob, lastCapturedImage.timestamp);
+            hideCaptureModal();
+            showNotification('🐟 Enviando al arrecife...', 'success');
+        } else if (!serverConnected) {
+            showNotification('❌ No conectado al acuario', 'danger');
+        }
+    };
+
+    discardBtn.onclick = () => {
+        clearInterval(modalTimeout);
+        if (lastCapturedImage && capturedImages.length > 0) {
+            const index = capturedImages.findIndex(img => img.id === lastCapturedImage.id);
+            if (index > -1) {
+                deleteImage(index);
+            }
+        }
+        hideCaptureModal();
+    };
+}
+
+function hideCaptureModal() {
+    const modal = document.getElementById('captureModal');
+    modal.style.display = 'none';
+    
+    if (modalTimeout) {
+        clearInterval(modalTimeout);
     }
 }
 
