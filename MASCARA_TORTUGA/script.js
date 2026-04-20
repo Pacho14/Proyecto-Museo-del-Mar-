@@ -114,6 +114,28 @@ const MOTION_THRESHOLD = 2000;
 const MOTION_SENSITIVITY = 0.3;
 const AUTO_CAPTURE_DELAY = 800;
 
+// ========== CONFIGURACIÓN DE MÁSCARAS Y QR ==========
+const MASK_CONFIG = {
+    pez: {
+        name: '🐟 Pez',
+        emoji: '🐟',
+        qr: 'qr-code mascara pez',
+        viewBox: '0 0 278.61 223.01',
+        path: 'M104.23,200.9c1.03,3.78,1.66,7.61.73,11.5-1.45,6.09-6.56,8.97-12.96,7.07-8.68-2.58-14.41-8.61-18.34-16.53-1.29-2.59-2.43-5.26-2.96-8.1-.32-1.71-1.11-2.31-2.74-2.65-17.46-3.67-33.54-10.46-47.5-21.74-9.38-7.58-16.73-16.65-19.63-28.74-1.79-7.46-.6-14.51,2.67-21.3.62-1.29.86-2.31.09-3.73-4.96-9.18-2.07-23.93,8.27-28.99.9-.44,1.32-1.15,1.67-2.01,10.49-25.4,30.52-39.41,56.02-46.83,1.63-.47,2.59-1.25,3.44-2.65C84.39,17.45,100.28,4.84,122.24,1.01c11.32-1.98,22.49-1.26,33.04,3.98,6.62,3.29,10.06,8.51,10.09,15.96.04,9.43,4.06,16.62,12.08,21.65,3.66,2.3,7.39,4.53,10.79,7.24,10.99,8.77,13.68,21.77,6.92,34.39-.99,1.85-.84,2.8.63,4.27,3.73,3.7,7.47,7.34,12.02,10.05.77.46,1.55.92,2.37,1.3,6.3,2.93,8.98,2.32,13.38-3.05,3.39-4.13,5.97-8.82,8.98-13.2,7.79-11.35,17.61-20.01,31.08-23.96,2.87-.84,5.79-1.51,8.79-1.32,4.72.29,7.66,4.2,5.47,8.26-4.98,9.27-6.41,19.46-8.76,29.44-2.35,9.98-7.06,18.5-15.58,24.53.06.27.05.47.14.55,9.61,7.92,13.38,18.56,13.98,30.55.27,5.35,1.67,10.29,4.06,15.02.37.72.72,1.45,1.04,2.2,1.99,4.72.04,8.04-5.08,8.55-3.95.4-7.72-.56-11.41-1.81-9.82-3.31-17.58-9.44-23.79-17.61-3-3.95-5.79-8.06-8.73-12.06-2.99-4.05-4.18-4.36-8.96-2.76-4.99,1.67-9.03,4.83-12.97,8.16-.7.6-1,.96-.28,1.91,6.1,8.05,5.7,16.72,1.58,25.28-4.06,8.43-11.58,11.74-20.59,12.07-7.73.29-15.04-1.53-21.97-4.88-1.51-.73-2.73-.74-4.27.05-5.38,2.76-11.11,4.65-17.3,6.42,3.87,3.83,6.43,8.13,7.54,13.26.58,2.7.64,5.41.2,8.08-1.11,6.7-6.84,10.4-14.12,9.33-10.95-1.62-18.78-7.81-24.65-16.85-1.08-1.66-1.98-3.43-2.97-5.15-.25-.4-.5-.81-.74-1.21-.55.43-.16.86,0,1.29Z'
+    },
+    tortuga: {
+        name: '🐢 Tortuga',
+        emoji: '🐢',
+        qr: 'qr-code mascara tortuga',
+        viewBox: '0 0 377.38 236.97',
+        path: 'M337.71,118.55c4.35.69,8.71,1.39,13.06,2.07,7.89,1.23,14.25,4.75,18.03,12.1.78,1.51,2.08,2.56,3.29,3.69,7.55,7.01,7.02,16.15-1.59,21.86-8.76,5.81-18.62,7.14-28.87,5.87-14.48-1.79-26.34-8.87-36.6-18.84-2.21-2.15-3.6-2.51-6.37-.76-11.95,7.57-25.31,11.63-38.99,14.72-9.61,2.17-19.37,3.36-29.19,4.08-1.25.09-2.49.32-4.25.56,3.54,3.14,5.17,7.07,7.27,10.69,1.9,3.27,4.76,5.64,7.81,7.69,3.74,2.51,6.3,5.82,8.01,9.91,1.67,4,4.28,7.23,7.78,9.83,4.36,3.25,8.58,6.69,11.96,11,2.19,2.79,3.81,5.91,4.37,9.41,1.13,7.09-3.52,12.48-11.81,13.77-11.99,1.86-23.66.17-35.09-3.53-19.54-6.34-36.56-17.04-52-30.4-8.68-7.51-16.34-15.9-22.37-25.73-2.62-4.26-4.55-8.82-5.88-13.62-.57-2.08-1.63-3.08-3.8-3.59-12.46-2.95-24.17-7.6-34.19-15.84-3.07-2.53-5.83-5.36-8.26-8.5-1.04-1.34-1.65-1.13-2.3.28-1.41,3.07-1.63,6.27-.61,9.42,1.13,3.49,2.43,6.94,3.92,10.29,1.79,4,2.94,8.15,3.12,12.49.23,5.61,2.36,10.52,4.92,15.34,2.37,4.48,4.63,9.02,4.62,14.26,0,6.09-3.76,10.02-9.89,10.23-5.17.18-10.09-1.17-14.62-3.52-20.32-10.54-34.82-26.17-40.38-48.72-3.39-13.77-.35-26.49,9.77-37,.62-.64,1.45-1.08,2-1.97-4.97-.25-9.67-.58-14.36-1.35-8.96-1.47-16.4-5.29-22.45-12.3-2.95-3.42-7.2-5.68-10.63-8.73C2.96,84.65-2.33,73.5.99,59.78c1.27-5.24,2.17-10.19,1.54-15.56-.48-4.08.7-8.09,2.9-11.6,1.62-2.59,1.6-5.61,2.68-8.34,2.75-6.95,7.71-10.75,15.15-11.35.84-.07,1.57-.28,2.3-.77C53.19-6.27,90.66,1.13,110.58,23.62c1.7,1.92,3.21,4.04,4.59,6.21.96,1.5,1.57,1.79,3.09.54,13.02-10.68,27.66-18.37,43.65-23.59C180.3.76,199.13-1.38,218.31.88c41.1,4.84,73.81,24.51,99.22,56.84,4.16,5.29,8.18,10.68,11.69,16.39,2.7,4.39,6.85,6.8,10.93,9.43,1.86,1.19,3.78,2.3,5.52,3.64,3.86,2.97,5.46,6.93,4.23,11.7-1.7,6.58-5.45,12.01-10.09,16.86-.75.78-1.74,1.32-2.62,1.98.17.28.34.56.51.84Z'
+    }
+};
+
+let currentMaskType = 'tortuga'; // Máscara actual (tortuga en MASCARA_TORTUGA)
+let lastQRDetection = null; // Último QR detectado (para evitar duplicados)
+let qrDetectionThrottle = 0; // Throttle para no procesar cada frame
+
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎬 DOMContentLoaded: Inicializando Scanner de Tortuga...');
@@ -147,6 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Monitor fullscreen changes para actualizar canvas
+    document.addEventListener('fullscreenchange', updateCanvasForFullscreen);
+    document.addEventListener('webkitfullscreenchange', updateCanvasForFullscreen);
+    document.addEventListener('mozfullscreenchange', updateCanvasForFullscreen);
+    document.addEventListener('MSFullscreenChange', updateCanvasForFullscreen);
+
     initializeMaskPath();
     
     // Conectar automáticamente al servidor
@@ -178,6 +206,17 @@ function initializeMaskPath() {
             maskPath = null;
         }
     }
+}
+
+// Actualizar canvas cuando cambia fullscreen
+function updateCanvasForFullscreen() {
+    setTimeout(() => {
+        if (video && isStreaming && detectionCanvas) {
+            detectionCanvas.width = video.videoWidth;
+            detectionCanvas.height = video.videoHeight;
+            console.log('📐 Canvas actualizado:', detectionCanvas.width, 'x', detectionCanvas.height);
+        }
+    }, 50);
 }
 
 // ========== CONEXIÓN CON SERVIDOR ==========
@@ -409,6 +448,8 @@ async function startCamera() {
             
             video.play().then(() => {
                 console.log('▶️ Video playing');
+                // Iniciar detección de QR en tiempo real
+                startQRDetectionLoop();
             }).catch(err => {
                 console.error('❌ Error al reproducir video:', err);
             });
@@ -673,6 +714,7 @@ function stopCamera() {
         isStreaming = false;
         referenceImageData = null;
         clearTimeout(captureTimeout);
+        stopQRDetectionLoop(); // Detener detección de QR
         updateUI();
         showNotification('⏹️ Cámara detenida');
     }
@@ -717,6 +759,13 @@ function toggleFullscreen() {
             }
         });
         
+        // Redimensionar canvas INMEDIATAMENTE
+        if (video && isStreaming) {
+            detectionCanvas.width = video.videoWidth;
+            detectionCanvas.height = video.videoHeight;
+            console.log('✅ Canvas redimensionado para fullscreen:', detectionCanvas.width, 'x', detectionCanvas.height);
+        }
+        
     } else {
         fullscreenBtn.innerHTML = '<span class="btn-icon">🖥️</span><span class="btn-text">Pantalla Completa</span>';
         document.body.style.overflow = 'auto';
@@ -738,6 +787,146 @@ function toggleFullscreen() {
         allBtns.forEach(btn => {
             btn.style.display = 'flex';
         });
+    }
+}
+
+// ========== DETECCIÓN DE CÓDIGOS QR ==========
+let qrDetectionLoopId = null;
+
+// Iniciar loop de detección de QR
+function startQRDetectionLoop() {
+    if (qrDetectionLoopId) return; // Ya está activo
+    
+    function detectionLoop() {
+        if (!isStreaming) {
+            qrDetectionLoopId = null;
+            return;
+        }
+        
+        try {
+            // Dibujar frame actual del video en canvas de detección
+            if (video && detectionCanvas) {
+                detCtx.drawImage(video, 0, 0, detectionCanvas.width, detectionCanvas.height);
+                
+                // Obtener datos de imagen para jsQR
+                const imageData = detCtx.getImageData(0, 0, detectionCanvas.width, detectionCanvas.height);
+                
+                // Detección de QR (cada 5 frames para mejor performance)
+                qrDetectionThrottle++;
+                if (qrDetectionThrottle >= 5) {
+                    qrDetectionThrottle = 0;
+                    
+                    if (window.jsQR) {
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: 'dontInvert'
+                        });
+                        
+                        if (code) {
+                            const qrData = code.data;
+                            console.log(`📱 QR Detectado: ${qrData}`);
+                            
+                            // Procesar QR code
+                            processQRCode(qrData);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error en loop de detección QR:', error);
+        }
+        
+        qrDetectionLoopId = requestAnimationFrame(detectionLoop);
+    }
+    
+    qrDetectionLoopId = requestAnimationFrame(detectionLoop);
+    console.log('✅ Loop de detección QR iniciado');
+}
+
+// Detener loop de detección de QR
+function stopQRDetectionLoop() {
+    if (qrDetectionLoopId) {
+        cancelAnimationFrame(qrDetectionLoopId);
+        qrDetectionLoopId = null;
+        console.log('⏹️ Loop de detección QR detenido');
+    }
+}
+
+// Procesar datos de QR
+function processQRCode(qrData) {
+    // Evitar detectar el mismo QR múltiples veces en poco tiempo
+    if (lastQRDetection === qrData && Date.now() - (lastQRDetection.timestamp || 0) < 2000) {
+        return;
+    }
+    
+    lastQRDetection = qrData;
+    
+    // Buscar coincidencia en máscaras
+    for (const [maskKey, maskConfig] of Object.entries(MASK_CONFIG)) {
+        // Comprobar diferentes variaciones del QR
+        if (qrData.toLowerCase().includes(maskConfig.qr.toLowerCase()) ||
+            qrData.toLowerCase().includes(maskKey)) {
+            
+            if (currentMaskType !== maskKey) {
+                console.log(`🎭 Cambiando a máscara: ${maskConfig.name}`);
+                switchMask(maskKey);
+            }
+            return;
+        }
+    }
+    
+    // Si no coincide con ninguna máscara
+    console.log(`⚠️ QR no reconocido: ${qrData}`);
+    updateQRDetectionStatus(`QR no reconocido: ${qrData.substring(0, 30)}...`);
+}
+
+// Cambiar máscara
+function switchMask(maskKey) {
+    if (!MASK_CONFIG[maskKey]) {
+        console.error(`❌ Máscara no encontrada: ${maskKey}`);
+        return;
+    }
+    
+    const newMask = MASK_CONFIG[maskKey];
+    currentMaskType = maskKey;
+    
+    try {
+        // Actualizar SVG
+        const svg = document.getElementById('maskOverlay');
+        const path = svg.querySelector('.mask-path');
+        
+        svg.setAttribute('viewBox', newMask.viewBox);
+        path.setAttribute('d', newMask.path);
+        
+        // Re-inicializar el Path2D
+        try {
+            maskPath = new Path2D(newMask.path);
+        } catch (error) {
+            console.error('Error al crear Path2D:', error);
+            maskPath = null;
+        }
+        
+        // Actualizar UI
+        const maskNameEl = document.getElementById('currentMaskName');
+        if (maskNameEl) {
+            maskNameEl.textContent = newMask.name;
+        }
+        
+        updateQRDetectionStatus(`✅ Máscara: ${newMask.name}`);
+        showNotification(`🎭 Cambio de máscara: ${newMask.name}`);
+        
+        console.log(`✅ Máscara cambiada a: ${newMask.name}`);
+        
+    } catch (error) {
+        console.error(`❌ Error al cambiar máscara:`, error);
+        showNotification(`❌ Error al cambiar máscara`, 'danger');
+    }
+}
+
+// Actualizar estado de detección QR en UI
+function updateQRDetectionStatus(message) {
+    const statusEl = document.getElementById('qrDetectionInfo');
+    if (statusEl) {
+        statusEl.textContent = message;
     }
 }
 
